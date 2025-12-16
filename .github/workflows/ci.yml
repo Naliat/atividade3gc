@@ -1,0 +1,43 @@
+name: CI de Integração (Docker Compose)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+      - master
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Iniciar Arquitetura (Docker Compose Up)
+      
+        run: docker-compose up -d --build
+
+      - name: Esperar o Backend Iniciar e o DB Conectar (30 segundos)
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '30s'
+
+      - name: Instalar Dependências no Host (Para rodar o test.js)
+    
+        run: npm install
+        working-directory: ./backend
+
+      - name: Executar Testes de Integração
+        run: npm test
+        working-directory: ./backend
+        
+      - name: Derrubar Ambiente Docker
+        if: always()
+        run: docker-compose down

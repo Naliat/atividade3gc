@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Serviço 1: Banco de Dados (MongoDB)
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      # Mapeia o volume persistente para persistir os dados do banco de dados
+      - mongo-data:/data/db
+    restart: always
+
+  # Serviço 2: Backend (Node.js)
+  nodejs-app:
+    # O contexto aponta corretamente para a pasta backend
+    build:
+      context: ./backend 
+      dockerfile: Dockerfile
+    container_name: nodejs-app
+    ports:
+      - '3000:3000'
+    # Depende do MongoDB para garantir que inicie primeiro [cite: 442]
+    depends_on:
+      - mongo
+    environment:
+      # A URI usa 'mongo' (nome do serviço) para se conectar [cite: 445]
+      - MONGO_URI=mongodb://mongo:27017/mydatabase
+    volumes:
+      # Mapeamento de volume para sincronizar o código do backend local com o container
+      - ./backend:/usr/src/app
+    command: node app.js
+
+  # Serviço 3: Frontend (React/Nginx)
+  react-app:
+    # CORRIGIDO: O contexto agora aponta corretamente para ./frontend/ola
+    build:
+      context: ./frontend/ola
+      dockerfile: Dockerfile
+    container_name: react-app
+    ports:
+      # Mapeia a porta interna 80 (Nginx) para a porta 8080 externa [cite: 326]
+      - '8080:80'
+    # O React precisa que o backend esteja rodando para consumir a API
+    depends_on:
+      - nodejs-app
+
+# Definição dos Volumes
+volumes:
+  mongo-data:
+    # Volume usado para persistir os dados do MongoDB [cite: 450]
