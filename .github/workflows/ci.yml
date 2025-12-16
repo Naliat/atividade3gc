@@ -1,4 +1,4 @@
-name: CI de Integração (Docker Compose)
+name: CI de Integracao (Docker Compose)
 
 on:
   push:
@@ -9,32 +9,35 @@ on:
     branches:
       - main
       - master
-      - master
   workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      NODE_VERSION: '18' 
+
     steps:
-      - name: Checkout do Código
+      - name: Checkout do Codigo
         uses: actions/checkout@v4
 
-      - name: Iniciar Arquitetura (Docker Compose Up)
-      
-        run: docker-compose up -d --build
+      - name: Setup Docker Buildx and Docker Compose
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Iniciar Arquitetura Docker Compose
+        run: docker-compose up -d --build 
 
-      - name: Esperar o Backend Iniciar e o DB Conectar (30 segundos)
+      - name: Esperar o Backend Iniciar (30 segundos)
         uses: jakejarvis/wait-action@master
         with:
           time: '30s'
 
-      - name: Instalar Dependências no Host (Para rodar o test.js)
-    
+      - name: Instalar Dependencias do Backend para Teste
         run: npm install
         working-directory: ./backend
 
-      - name: Executar Testes de Integração
+      - name: Executar Testes de Integracao
         run: npm test
         working-directory: ./backend
         
